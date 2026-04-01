@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relatório UX Completo — MuvFlow</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    line-height: 1.6;
+  }
+
+  header {
+    background: #111;
+    color: #fff;
+    padding: 56px 32px 48px;
+    text-align: center;
+  }
+  header h1 { font-size: 32px; font-weight: 600; margin-bottom: 8px; }
+  header .subtitle { color: #999; font-size: 14px; margin-bottom: 24px; }
+  header .score-bar {
+    display: inline-flex;
+    gap: 24px;
+    background: rgba(255,255,255,0.06);
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 13px;
+  }
+  header .score-item { text-align: center; }
+  header .score-item .label { color: #888; display: block; margin-bottom: 4px; }
+  header .score-item .value { font-weight: 700; font-size: 18px; }
+  header .score-item .value.bad { color: #f87171; }
+  header .score-item .value.mid { color: #fbbf24; }
+
+  .container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+  /* NAV / TOC */
+  .toc {
+    padding: 32px 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .toc h2 { font-size: 16px; margin-bottom: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+  .toc ol {
+    padding-left: 20px;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .toc li { margin-bottom: 6px; font-size: 14px; }
+  .toc a { color: #1a1a1a; text-decoration: none; border-bottom: 1px solid #ccc; }
+  .toc a:hover { border-color: #111; }
+
+  /* SECTIONS */
+  .section {
+    padding: 48px 0;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .section:last-child { border-bottom: none; }
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #999;
+    margin-bottom: 4px;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .section-subtitle {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+
+  /* SCREEN SUB-SECTIONS */
+  .screen {
+    margin-bottom: 48px;
+  }
+  .screen:last-child { margin-bottom: 0; }
+  .screen-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .screen-subtitle {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 16px;
+  }
+
+  /* IMAGES */
+  .annotated-image {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 16px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .annotated-image img {
+    width: 100%;
+    display: block;
+  }
+
+  .marker {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    cursor: default;
+    z-index: 2;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    transition: transform 0.15s;
+  }
+  .marker:hover { transform: scale(1.3); }
+  .marker.critical { background: #dc2626; }
+  .marker.high { background: #ea580c; }
+  .marker.medium { background: #ca8a04; }
+  .marker.low { background: #6b7280; }
+  .marker.positive { background: #16a34a; font-size: 15px; }
+
+  .highlight-box {
+    position: absolute;
+    border: 2px solid;
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .highlight-box.critical { border-color: #dc2626; background: rgba(220,38,38,0.08); }
+  .highlight-box.high { border-color: #ea580c; background: rgba(234,88,12,0.08); }
+  .highlight-box.medium { border-color: #ca8a04; background: rgba(202,138,4,0.08); }
+  .highlight-box.low { border-color: #6b7280; background: rgba(107,114,128,0.08); }
+
+  /* FINDINGS */
+  .findings-list {
+    list-style: none;
+    padding: 0;
+  }
+  .finding {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+  }
+  .finding:last-child { border-bottom: none; }
+  .finding-number {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .finding-number.critical { background: #dc2626; }
+  .finding-number.high { background: #ea580c; }
+  .finding-number.medium { background: #ca8a04; }
+  .finding-number.low { background: #6b7280; }
+  .finding-content { flex: 1; }
+  .finding-content strong { display: block; margin-bottom: 2px; }
+  .severity {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .severity.critical { color: #dc2626; }
+  .severity.high { color: #ea580c; }
+  .severity.medium { color: #ca8a04; }
+  .severity.low { color: #6b7280; }
+  .rec {
+    margin-top: 6px;
+    color: #16a34a;
+    font-size: 13px;
+  }
+  .rec::before { content: "\2192  "; }
+
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  /* TABLES */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 8px 10px;
+    background: #f5f5f5;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+  }
+  .data-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+  }
+  .data-table .bad { color: #dc2626; font-weight: 600; }
+  .data-table .good { color: #16a34a; }
+  .data-table .warn { color: #ca8a04; }
+
+  /* DARK PATTERN CARDS */
+  .dp-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .dp-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .dp-card .dp-header {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 14px;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+  .dp-card .dp-body {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #444;
+  }
+  .dp-card .dp-where {
+    font-size: 11px;
+    color: #888;
+    margin-top: 6px;
+  }
+
+  /* COMPARISON */
+  .comparison-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .comparison-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #fff;
+  }
+  .comparison-card .card-header {
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 14px;
+  }
+  .comparison-card .card-body {
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #444;
+  }
+  .comparison-card .card-body ul { padding-left: 16px; margin: 0; }
+  .comparison-card .card-body li { margin-bottom: 4px; }
+  .comparison-card.problem .card-header { background: #fef2f2; color: #991b1b; }
+  .comparison-card.solution .card-header { background: #f0fdf4; color: #166534; }
+
+  /* CALLOUT */
+  .callout {
+    padding: 14px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    margin: 16px 0;
+  }
+  .callout.positive { background: #f0fdf4; color: #166534; }
+  .callout.warning { background: #fffbeb; color: #92400e; }
+  .callout.danger { background: #fef2f2; color: #991b1b; }
+
+  /* RECS */
+  .rec-group { margin-bottom: 24px; }
+  .rec-group h4 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e5e5;
+  }
+  .rec-item {
+    display: flex;
+    gap: 10px;
+    padding: 8px 0;
+    font-size: 14px;
+    border-bottom: 1px solid #f5f5f5;
+  }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-badge {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .rec-badge.quick { background: #dcfce7; color: #166534; }
+  .rec-badge.structural { background: #dbeafe; color: #1e40af; }
+  .rec-badge.redesign { background: #f3e8ff; color: #6b21a8; }
+
+  footer {
+    text-align: center;
+    padding: 32px;
+    color: #999;
+    font-size: 12px;
+    border-top: 1px solid #e5e5e5;
+  }
+
+  @media (max-width: 700px) {
+    .dp-grid, .comparison-grid { grid-template-columns: 1fr; }
+    .toc ol { columns: 1; }
+    header .score-bar { flex-direction: column; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================================================================ -->
+<!-- HEADER -->
+<!-- ================================================================ -->
+<header>
+  <h1>Analise UX Completa — MuvFlow</h1>
+  <p class="subtitle">Relatorio visual consolidado | 30/03/2026 | 13 telas analisadas</p>
+  <div class="score-bar">
+    <div class="score-item">
+      <span class="label">Landing Page</span>
+      <span class="value bad">4/10</span>
+    </div>
+    <div class="score-item">
+      <span class="label">Criar Conta</span>
+      <span class="value mid">5/10</span>
+    </div>
+    <div class="score-item">
+      <span class="label">Criar Musica</span>
+      <span class="value bad">4/10</span>
+    </div>
+    <div class="score-item">
+      <span class="label">Geral</span>
+      <span class="value bad">4/10</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- ================================================================ -->
+<!-- TOC -->
+<!-- ================================================================ -->
+<div class="toc">
+  <h2>Indice</h2>
+  <ol>
+    <li><a href="#resumo">Resumo Executivo</a></li>
+    <li><a href="#dark-patterns">Dark Patterns Identificados</a></li>
+    <li><a href="#jornada">Jornada Anotada</a></li>
+    <li><a href="#transversais">Achados Transversais</a></li>
+    <li><a href="#recomendacoes">Recomendacoes Priorizadas</a></li>
+  </ol>
+</div>
+
+<!-- ================================================================ -->
+<!-- 1. RESUMO EXECUTIVO -->
+<!-- ================================================================ -->
+<div class="section" id="resumo">
+  <p class="section-label">Parte 1</p>
+  <h2 class="section-title">Resumo Executivo</h2>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot" style="background:#dc2626"></div> Critico</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ea580c"></div> Alto</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#ca8a04"></div> Medio</div>
+    <div class="legend-item"><div class="legend-dot" style="background:#6b7280"></div> Baixo</div>
+  </div>
+
+  <h3 style="font-size: 16px; margin-bottom: 12px;">Top 5 Achados Criticos</h3>
+  <ul class="findings-list">
+    <li class="finding">
+      <div class="finding-number critical">1</div>
+      <div class="finding-content">
+        <strong>Cessao de 100% dos direitos autorais completamente invisivel</strong>
+        O core do modelo de negocio (cessao de IP para securitizacao pela Hurst Capital) nao e mencionado em nenhuma tela publica. Esta enterrado na Secao 6 dos Termos, atras de checkbox generico. Configura potencial bait and switch.
+      </div>
+    </li>
+    <li class="finding">
+      <div class="finding-number critical">2</div>
+      <div class="finding-content">
+        <strong>Dark patterns sistematicos em todas as paginas</strong>
+        7 tipos distintos de dark patterns operando simultaneamente: escassez artificial, urgencia falsa, trick wording, privacy zuckering, social proof inflado, preco-ancora ficticio e confirmshaming. Nao sao incidentes isolados — e estrategia sistematica.
+      </div>
+    </li>
+    <li class="finding">
+      <div class="finding-number critical">3</div>
+      <div class="finding-content">
+        <strong>Numeros inconsistentes e possivelmente fabricados</strong>
+        "432.360 artistas" na LP, "432.690+" no signup, "412.360" no hub de criacao, "412.720" pos-signup. Plataforma real tem ~2k usuarios ativos e ~14k musicas. Discrepancia de ordens de magnitude.
+      </div>
+    </li>
+    <li class="finding">
+      <div class="finding-number high">4</div>
+      <div class="finding-content">
+        <strong>CTA "Criar Minha Primeira Musica" promete criacao, entrega formulario de conta</strong>
+        Dissonancia cognitiva no momento mais critico do funil. O usuario consente com cessao de direitos achando que esta criando musica.
+      </div>
+    </li>
+    <li class="finding">
+      <div class="finding-number high">5</div>
+      <div class="finding-content">
+        <strong>Arquitetura de informacao fragmentada</strong>
+        Navegacao contradiz entre top nav e sidebar. "Criar Musica" (o produto) escondido no menu hamburger. 3 formularios de criacao quase identicos gerando choice overload. Hub mistura landing page com produto.
+      </div>
+    </li>
+  </ul>
+</div>
+
+<!-- ================================================================ -->
+<!-- 2. DARK PATTERNS -->
+<!-- ================================================================ -->
+<div class="section" id="dark-patterns">
+  <p class="section-label">Parte 2</p>
+  <h2 class="section-title">Dark Patterns Identificados</h2>
+  <p class="section-subtitle">7 padroes manipulativos distintos operando em conjunto ao longo de toda a experiencia.</p>
+
+  <div class="dp-grid">
+    <div class="dp-card">
+      <div class="dp-header">1. Fake Scarcity (Escassez Artificial)</div>
+      <div class="dp-body">
+        "Apenas 22 vagas hoje", "Apenas 17 restantes!", "Vagas Limitadas para Novos Artistas" — em plataforma digital gratuita sem limitacao tecnica real. Custo marginal de novo usuario e proximo de zero.
+        <div class="dp-where">Onde aparece: LP, Signup, Calculadora</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">2. False Urgency (Urgencia Falsa)</div>
+      <div class="dp-body">
+        "80% das vagas preenchidas hoje" + barra de progresso, "83% preenchidas" no signup, contador regressivo "11:19:11" no hub de criacao. Pressao temporal sem justificativa.
+        <div class="dp-where">Onde aparece: LP, Signup, Hub de Criacao</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">3. Trick Wording (Texto Enganoso)</div>
+      <div class="dp-body">
+        CTA "Criar Minha Primeira Musica" quando a acao real e criar uma conta. O usuario consente com termos complexos (cessao de IP) achando que esta criando musica. Expectativa falsa + consentimento desinformado.
+        <div class="dp-where">Onde aparece: Signup</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">4. Privacy Zuckering (Termos Escondidos)</div>
+      <div class="dp-body">
+        Cessao de 100% dos direitos autorais escondida na Secao 6 de documento com 24+ secoes de linguagem juridica. Checkbox generico "Aceito os Termos". Probabilidade de leitura real: menos de 5%.
+        <div class="dp-where">Onde aparece: Signup + Termos</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">5. Social Proof Manipulation</div>
+      <div class="dp-body">
+        Numeros inflados e inconsistentes entre paginas (~2k usuarios reais vs 432k alegados). "47 avaliacoes" para 432k artistas (0,01%). "R$ 60MM em royalties" sem fonte. Testimonial generico sem verificacao.
+        <div class="dp-where">Onde aparece: todas as paginas</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">6. Reference Pricing (Preco-Ancora Falso)</div>
+      <div class="dp-body">
+        "GRATIS <s>R$49,90</s>" em todos os cards de criacao. Se o servico nunca custou R$49,90, o desconto e ficticio. Pode configurar pratica comercial enganosa (CDC Art. 37).
+        <div class="dp-where">Onde aparece: Hub de Criacao</div>
+      </div>
+    </div>
+    <div class="dp-card">
+      <div class="dp-header">7. Confirmshaming (FOMO Artificial)</div>
+      <div class="dp-body">
+        "O Que Voce Esta Perdendo AGORA" na pagina de indicacao — faz o usuario sentir que esta perdendo dinheiro por nao indicar. Framing negativo para pressionar acao.
+        <div class="dp-where">Onde aparece: Indique e Ganhe</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 3. JORNADA ANOTADA -->
+<!-- ================================================================ -->
+<div class="section" id="jornada">
+  <p class="section-label">Parte 3</p>
+  <h2 class="section-title">Jornada Completa Anotada</h2>
+  <p class="section-subtitle">13 telas em sequencia, do primeiro contato ate a criacao de musica. Cada tela aparece uma vez com seus achados especificos.</p>
+
+  <!-- ==================== TELA 1: LP ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">1. Landing Page</h3>
+    <p class="screen-subtitle">Primeiro contato. Visual atraente, mas escassez artificial e o primeiro elemento que o olho captura.</p>
+
+    <div class="annotated-image">
+      <img src="lp/1_inicial.png" alt="Landing Page">
+      <div class="marker critical" style="top: 3.5%; left: 55%;">1</div>
+      <div class="highlight-box critical" style="top: 2.8%; left: 25%; width: 50%; height: 2.5%;"></div>
+      <div class="marker critical" style="top: 4.8%; left: 38%;">2</div>
+      <div class="marker high" style="top: 0.8%; left: 78%;">3</div>
+      <div class="marker high" style="top: 43%; left: 85%;">4</div>
+      <div class="highlight-box high" style="top: 38%; left: 5%; width: 90%; height: 14%;"></div>
+      <div class="marker medium" style="top: 20%; left: 85%;">5</div>
+      <div class="marker medium" style="top: 31%; left: 80%;">6</div>
+      <div class="highlight-box medium" style="top: 29.5%; left: 10%; width: 80%; height: 4%;"></div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number critical">1</div>
+        <div class="finding-content">
+          <strong>"Apenas 22 vagas hoje" — escassez artificial no topo</strong>
+          Primeiro elemento visivel. Plataforma gratuita sem limitacao tecnica. Gera desconfianca imediata.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">2</div>
+        <div class="finding-content">
+          <strong>Barra "80% das vagas preenchidas" — urgencia visual falsa</strong>
+          Reforco visual do banner com barra de progresso. Duplo dark pattern na mesma area.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">3</div>
+        <div class="finding-content">
+          <strong>"Criar Musica" ausente do top nav</strong>
+          Top nav: Explorar, Indique e Ganhe, Entrar. O produto principal da plataforma so aparece no menu hamburger.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">4</div>
+        <div class="finding-content">
+          <strong>~80% do conteudo foca em monetizacao</strong>
+          "De 0 a Receita Recorrente", calculadora, indicacao — quase nada sobre criacao artistica. Atrai perfil "renda facil", afasta criadores genuinos.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">5</div>
+        <div class="finding-content">
+          <strong>Nenhum player de audio na LP</strong>
+          Plataforma de musica onde o usuario nao pode ouvir nenhuma musica antes de se cadastrar.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">6</div>
+        <div class="finding-content">
+          <strong>Programa de indicacao com linguagem MLM-adjacent</strong>
+          "Ganhe 25% dos Royalties Deles Para Sempre" — tom que remete a marketing multinivel.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 2: MENU ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">2. Menu Lateral vs Top Nav</h3>
+    <p class="screen-subtitle">Duas estruturas de navegacao contraditorias coexistem.</p>
+
+    <div class="annotated-image">
+      <img src="lp/2_inicia-menu-aberto.png" alt="Menu lateral">
+      <div class="marker high" style="top: 8%; left: 48%;">1</div>
+      <div class="highlight-box high" style="top: 2%; left: 36%; width: 38%; height: 10%;"></div>
+      <div class="marker high" style="top: 50%; left: 92%;">2</div>
+      <div class="highlight-box high" style="top: 30%; left: 72%; width: 27%; height: 50%;"></div>
+      <div class="marker critical" style="top: 42%; left: 72%;">3</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number high">1</div>
+        <div class="finding-content">
+          <strong>Top nav: apenas Explorar, Indique e Ganhe, Entrar</strong>
+          Faltam "Criar Musica" e "Calculadora" — funcionalidades-chave escondidas.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">2</div>
+        <div class="finding-content">
+          <strong>Menu lateral tem itens completamente diferentes</strong>
+          Sidebar: Inicio, Criar Musica, Calculadora, Explorar Musicas. Experiencia fragmentada entre dispositivos.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">3</div>
+        <div class="finding-content">
+          <strong>"Criar Musica" (o produto) escondido no hamburger</strong>
+          Usuarios desktop que nao abrem o sidebar nunca veem o produto principal na navegacao.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 3: EXPLORAR ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">3. Explorar Musicas</h3>
+    <p class="screen-subtitle">Catalogo de musicas — deveria ser vitrine musical, parece planilha administrativa.</p>
+
+    <div class="annotated-image">
+      <img src="lp/3_explorar.png" alt="Explorar">
+      <div class="marker medium" style="top: 5%; left: 90%;">1</div>
+      <div class="marker medium" style="top: 15%; left: 5%;">2</div>
+      <div class="marker medium" style="top: 2%; left: 50%;">3</div>
+      <div class="marker low" style="top: 50%; left: 90%;">4</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number medium">1</div>
+        <div class="finding-content">
+          <strong>Interface de lista densa — UX de planilha, nao de vitrine musical</strong>
+          Thumbnails pequenos, textos comprimidos, sem cards, sem respiro visual.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">2</div>
+        <div class="finding-content">
+          <strong>Nenhum player de audio visivel</strong>
+          Pagina de musicas sem forma obvia de ouvir as musicas.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">3</div>
+        <div class="finding-content">
+          <strong>Sem curadoria ou destaques</strong>
+          Nao ha "Top da Semana", "Trending". Catalogo de 3.5M+ sem curadoria e inutilizavel.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number low">4</div>
+        <div class="finding-content">
+          <strong>Fundo gradiente prejudica leitura; metricas ambiguas ao lado das musicas</strong>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 4: INDIQUE E GANHE ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">4. Indique e Ganhe</h3>
+    <p class="screen-subtitle">Mecanica clara, mas comunicacao agressiva e tom MLM-adjacent.</p>
+
+    <div class="annotated-image">
+      <img src="lp/4_indique_e_ganhe.png" alt="Indique e Ganhe">
+      <div class="marker high" style="top: 23%; left: 85%;">1</div>
+      <div class="highlight-box high" style="top: 20%; left: 10%; width: 80%; height: 5%;"></div>
+      <div class="marker medium" style="top: 7%; left: 85%;">2</div>
+      <div class="marker medium" style="top: 58%; left: 85%;">3</div>
+      <div class="highlight-box medium" style="top: 51%; left: 10%; width: 80%; height: 15%;"></div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number high">1</div>
+        <div class="finding-content">
+          <strong>"O Que Voce Esta Perdendo AGORA" — confirmshaming explicito</strong>
+          Faz o usuario sentir que esta perdendo dinheiro. FOMO artificial. Framing negativo para pressionar acao.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">2</div>
+        <div class="finding-content">
+          <strong>"25% dos royalties deles. Para sempre." — linguagem MLM</strong>
+          "Para sempre" e promessa legalmente fragil que gera ceticismo.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">3</div>
+        <div class="finding-content">
+          <strong>Top Indicadores com valores nao verificaveis</strong>
+          Tabela com nomes e valores sem forma de verificacao. Link de indicacao visivel para visitante nao logado.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 5: CALCULADORA ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">5. Calculadora de Royalties</h3>
+    <p class="screen-subtitle">Ferramenta engajante, mas sliders otimistas + disclaimer que anula tudo = bait and switch informacional.</p>
+
+    <div class="annotated-image">
+      <img src="lp/6_calculadora-de-royalities.png" alt="Calculadora">
+      <div class="marker critical" style="top: 2%; left: 55%;">1</div>
+      <div class="highlight-box critical" style="top: 1%; left: 15%; width: 70%; height: 2.5%;"></div>
+      <div class="marker medium" style="top: 18%; left: 85%;">2</div>
+      <div class="highlight-box medium" style="top: 12%; left: 10%; width: 80%; height: 18%;"></div>
+      <div class="marker critical" style="top: 74%; left: 85%;">3</div>
+      <div class="highlight-box critical" style="top: 72%; left: 10%; width: 80%; height: 5%;"></div>
+      <div class="marker critical" style="top: 85%; left: 85%;">4</div>
+      <div class="highlight-box critical" style="top: 81%; left: 5%; width: 90%; height: 14%;"></div>
+      <div class="marker medium" style="top: 52%; left: 85%;">5</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number critical">1</div>
+        <div class="finding-content">
+          <strong>Escassez artificial repetida pela 3a vez</strong>
+          Banner de vagas limitadas no topo. A repeticao em multiplas paginas expoe o padrao como sistematico.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">2</div>
+        <div class="finding-content">
+          <strong>Sliders com valores padrao otimistas (Default Bias)</strong>
+          R$ 2.050/mes como resultado destacado. Usuario preguicoso aceita cenario otimista sem ajustar.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">3</div>
+        <div class="finding-content">
+          <strong>"Vagas Limitadas para Novos Artistas" com CTA de urgencia</strong>
+          Secao inteira dedicada a escassez artificial. Quinta instancia na plataforma.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">4</div>
+        <div class="finding-content">
+          <strong>Disclaimer no final anula todas as projecoes</strong>
+          Apos projetar R$ 2.050/mes e R$ 24.600/ano, diz que "nada e garantido, valores meramente ilustrativos". Bait and switch informacional.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">5</div>
+        <div class="finding-content">
+          <strong>"Equivalente a 1.5x salario minimo" — targeting vulneravel</strong>
+          Posicionar ganhos como multiplos de salario minimo mira publico de baixa renda, mais vulneravel a promessas de renda extra.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 6: SIGNUP ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">6. Pagina de Signup</h3>
+    <p class="screen-subtitle">~12 elementos persuasivos na mesma viewport. Formulario funcional, mas estrategicamente arriscado.</p>
+
+    <div class="annotated-image">
+      <img src="criar-conta/criar-conta.png" alt="Signup">
+      <div class="marker critical" style="top: 13.5%; left: 42%;">1</div>
+      <div class="highlight-box critical" style="top: 11.5%; left: 3%; width: 48%; height: 6%;"></div>
+      <div class="marker critical" style="top: 63%; left: 92%;">2</div>
+      <div class="highlight-box critical" style="top: 60.5%; left: 55%; width: 42%; height: 4%;"></div>
+      <div class="marker critical" style="top: 57%; left: 92%;">3</div>
+      <div class="highlight-box critical" style="top: 56%; left: 55%; width: 42%; height: 3%;"></div>
+      <div class="marker high" style="top: 24%; left: 4%;">4</div>
+      <div class="marker medium" style="top: 38%; left: 4%;">5</div>
+      <div class="marker medium" style="top: 46%; left: 4%;">6</div>
+      <div class="highlight-box medium" style="top: 45%; left: 3%; width: 30%; height: 3%;"></div>
+      <div class="marker high" style="top: 50%; left: 4%;">7</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number critical">1</div>
+        <div class="finding-content">
+          <strong>"Apenas 17 restantes!" + "83% das vagas preenchidas"</strong>
+          Mesma escassez da LP, agora com numeros diferentes (22 → 17). A mudanca de numero entre paginas expoe fabricacao.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">2</div>
+        <div class="finding-content">
+          <strong>CTA "Criar Minha Primeira Musica" — acao real e criar conta</strong>
+          Dissonancia cognitiva no momento mais critico. Gera frustacao pos-clique e consentimento desinformado com termos.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">3</div>
+        <div class="finding-content">
+          <strong>Checkbox generico esconde cessao de 100% dos direitos autorais</strong>
+          "Aceito os Termos de Servico" — atras disso, 24+ secoes juridicas incluindo cessao total de IP e arbitragem obrigatoria.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">4</div>
+        <div class="finding-content">
+          <strong>"Ganhe ate R$50.000/ano" sem evidencia</strong>
+          Promessa agressiva. No hub pos-signup vira "R$5.000/mes" (= R$60k/ano). Numeros conflitantes entre telas.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">5</div>
+        <div class="finding-content">
+          <strong>Mencao a "Suno AI V4" revela motor terceirizado</strong>
+          Levanta a pergunta: "por que nao uso o Suno direto?" Sem diferenciacao clara do valor agregado.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">6</div>
+        <div class="finding-content">
+          <strong>"4.9 de 5 baseado em 47 avaliacoes" — desproporcional para 432k artistas</strong>
+          0,01% de taxa de avaliacao. O numero baixo contradiz a narrativa de plataforma massiva.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">7</div>
+        <div class="finding-content">
+          <strong>~12 elementos persuasivos na mesma viewport = "tentando convencer demais"</strong>
+          Headline, urgencia, bullets, numeros, badges, logos, feed, testimonial, formulario. O excesso reduz confianca.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 7: TERMOS ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">7. Termos de Servico</h3>
+    <p class="screen-subtitle">O que o checkbox do signup esconde. 24+ secoes, 20-30 minutos de leitura, menos de 5% le.</p>
+
+    <div class="annotated-image">
+      <img src="termos.png" alt="Termos de Servico">
+      <div class="marker critical" style="top: 28%; left: 90%;">1</div>
+      <div class="highlight-box critical" style="top: 26.5%; left: 3%; width: 85%; height: 4%;"></div>
+      <div class="marker high" style="top: 33%; left: 90%;">2</div>
+      <div class="highlight-box high" style="top: 31.5%; left: 3%; width: 85%; height: 3%;"></div>
+      <div class="marker medium" style="top: 82.5%; left: 90%;">3</div>
+      <div class="highlight-box medium" style="top: 81.5%; left: 3%; width: 85%; height: 3%;"></div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number critical">1</div>
+        <div class="finding-content">
+          <strong>Secao 6: "Propriedade Intelectual — Titularidade 100% MuvFlow"</strong>
+          Clausula mais impactante. Usuario cede titularidade total. MuvFlow/Hurst Capital pode securitizar, vender, licenciar sem consultar. Enterrada na secao 6 de 24+.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">2</div>
+        <div class="finding-content">
+          <strong>Secao 7: Royalties e Condicoes Economicas</strong>
+          Percentuais e condicoes de pagamento que o usuario aceita sem visibilidade no signup.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">3</div>
+        <div class="finding-content">
+          <strong>Secao 21: Arbitragem obrigatoria (CAM-CCBC, Sao Paulo/SP)</strong>
+          Usuario abre mao da justica comum. Custo de arbitragem proibitivo para individuais. Secoes 18-19 isentam garantias e limitam responsabilidade — contradizendo promessas do signup.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 8: HUB DE CRIACAO ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">8. Hub de Criacao de Musica</h3>
+    <p class="screen-subtitle">Pos-signup. Funciona como landing page e hub ao mesmo tempo — dilui o foco. 4 cards onde 3 sao quase identicos.</p>
+
+    <div class="annotated-image">
+      <img src="criar-musica/1-criar-conta-crie-seu-primeiro-hit.png" alt="Hub de Criacao">
+      <div class="marker high" style="top: 2.2%; left: 55%;">1</div>
+      <div class="highlight-box high" style="top: 1.2%; left: 18%; width: 45%; height: 2.5%;"></div>
+      <div class="marker critical" style="top: 10%; left: 5%;">2</div>
+      <div class="highlight-box critical" style="top: 7%; left: 5%; width: 68%; height: 14%;"></div>
+      <div class="marker high" style="top: 18%; left: 90%;">3</div>
+      <div class="highlight-box high" style="top: 14.5%; left: 5%; width: 90%; height: 6%;"></div>
+      <div class="marker high" style="top: 10%; left: 90%;">4</div>
+      <div class="marker low" style="top: 60%; left: 85%;">5</div>
+      <div class="highlight-box low" style="top: 36%; left: 5%; width: 90%; height: 52%;"></div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number high">1</div>
+        <div class="finding-content">
+          <strong>Contador regressivo "11:19:11" — urgencia artificial no hub</strong>
+          Timer sem justificativa real. Mais uma instancia de pressao temporal.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number critical">2</div>
+        <div class="finding-content">
+          <strong>3 dos 4 cards compartilham 95% dos campos — choice overload fabricado</strong>
+          "Do Zero", "Musica de Referencia" e "Banda de Referencia" diferem por 1 campo de texto. A separacao cria paralisia sem entregar valor. O campo "Estilo" do "Do Zero" ja aceita "Como Beatles", tornando os outros redundantes.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">3</div>
+        <div class="finding-content">
+          <strong>Preco riscado "GRATIS <s>R$49,90</s>" — ancoragem ficticia</strong>
+          Em todos os cards. Se nunca custou R$49,90, o desconto e fabricado.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">4</div>
+        <div class="finding-content">
+          <strong>Card "Enviar Audio" nao menciona limite de 1 min / 10MB</strong>
+          Usuario so descobre no formulario. Preparou audio de 3 min? Frustracao e abandono.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number low">5</div>
+        <div class="finding-content">
+          <strong>Metade da pagina e material de landing page pos-conversao</strong>
+          Comparativo, metricas, FAQ, CTA final — usuario ja esta logado, quer criar, nao ler argumentos de venda.
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ==================== TELA 9: DO ZERO ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">9. Formulario "Do Zero"</h3>
+    <p class="screen-subtitle">Layout limpo, mas opcoes avancadas expoe termos da API Suno sem traducao.</p>
+
+    <div class="annotated-image">
+      <img src="criar-musica/criar-do-zero.png" alt="Do Zero">
+      <div class="marker medium" style="top: 16%; left: 88%;">1</div>
+      <div class="highlight-box medium" style="top: 14.5%; left: 8%; width: 80%; height: 3.5%;"></div>
+      <div class="marker medium" style="top: 10.5%; left: 88%;">2</div>
+      <div class="marker high" style="top: 53%; left: 88%;">3</div>
+      <div class="highlight-box high" style="top: 52%; left: 8%; width: 40%; height: 3%;"></div>
+      <div class="marker high" style="top: 67%; left: 88%;">4</div>
+      <div class="highlight-box high" style="top: 65.5%; left: 8%; width: 80%; height: 4%;"></div>
+      <div class="marker medium" style="top: 82%; left: 88%;">5</div>
+      <div class="highlight-box medium" style="top: 79%; left: 8%; width: 80%; height: 14%;"></div>
+      <div class="marker positive" style="top: 31.5%; left: 7%;">+</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number medium">1</div>
+        <div class="finding-content">
+          <strong>Campo "Estilo" aceita "Rock, MPB, Como Beatles..." — torna formularios de referencia redundantes</strong>
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">2</div>
+        <div class="finding-content">
+          <strong>Nenhum campo indica se e obrigatorio ou opcional</strong>
+          Usuario nao sabe o minimo necessario para gerar musica.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">3</div>
+        <div class="finding-content">
+          <strong>"Advanced Options" com badge "NEW" — secao inteira em ingles</strong>
+          Badge incentiva clique, expondo usuario a complexidade com terminologia estrangeira.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">4</div>
+        <div class="finding-content">
+          <strong>"Weirdness 50%" — jargao da API Suno incompreensivel para leigos</strong>
+          Sem tooltip, sem traducao, sem contexto. O que acontece se aumenta? Diminui?
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number medium">5</div>
+        <div class="finding-content">
+          <strong>5 modelos de IA sem orientacao — descricoes em ingles</strong>
+          V5, V4.5, V4, V3.5, V4.5 Plus — nomenclatura confusa, sem recomendacao clara.
+        </div>
+      </li>
+    </ul>
+    <div class="callout positive">
+      <strong>Pontos positivos:</strong> Layout limpo. Toggle "Gerar com IA / Escrever Eu Mesmo" excelente. Botao "Sugerir" titulo. Idioma default "Portugues (Brasil)" acertado. Opcoes avancadas colapsadas por padrao.
+    </div>
+  </div>
+
+  <!-- ==================== TELAS 10-11: REFERENCIA ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">10-11. Formularios "Musica de Referencia" e "Banda de Referencia"</h3>
+    <p class="screen-subtitle">95% identicos ao "Do Zero" — a diferenca e 1 campo de texto extra cada.</p>
+
+    <div class="comparison-grid">
+      <div class="annotated-image" style="margin-bottom: 0;">
+        <img src="criar-musica/criar-musica-referencia.png" alt="Musica de Referencia">
+        <div class="marker medium" style="top: 10.5%; left: 88%;">1</div>
+        <div class="highlight-box medium" style="top: 9%; left: 8%; width: 80%; height: 5%;"></div>
+      </div>
+      <div class="annotated-image" style="margin-bottom: 0;">
+        <img src="criar-musica/criar-banda-referencia.png" alt="Banda de Referencia">
+        <div class="marker medium" style="top: 10.5%; left: 88%;">1</div>
+        <div class="highlight-box medium" style="top: 9%; left: 8%; width: 80%; height: 5%;"></div>
+      </div>
+    </div>
+
+    <table class="data-table" style="margin-top: 16px;">
+      <thead>
+        <tr>
+          <th>Campo</th>
+          <th>Do Zero</th>
+          <th>Musica Ref.</th>
+          <th>Banda Ref.</th>
+          <th>Enviar Audio</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Titulo</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td></tr>
+        <tr><td>Estilo</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr><td>Descricao</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr><td>Letra (IA/Manual)</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr><td>Idioma</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr><td>Opcoes Avancadas</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr><td>Modelo IA</td><td class="good">Sim</td><td class="good">Sim</td><td class="good">Sim</td><td class="bad">Nao</td></tr>
+        <tr style="background: #fef2f2;">
+          <td><strong>Campo exclusivo</strong></td>
+          <td class="bad">Nenhum</td>
+          <td class="warn">Musica ref.</td>
+          <td class="warn">Banda/Artista</td>
+          <td class="good">Upload + Instrumentos</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout warning">
+      Os 3 primeiros formularios sao o mesmo formulario com 1 campo extra. A separacao em 3 cards no hub cria ilusao de variedade e gera paralisia de decisao sem entregar valor real.
+    </div>
+  </div>
+
+  <!-- ==================== TELA 12: ENVIAR AUDIO ==================== -->
+  <div class="screen">
+    <h3 class="screen-title">12. Formulario "Enviar Audio"</h3>
+    <p class="screen-subtitle">Unico formulario realmente diferente — e o melhor do fluxo. Proposta forte, mas limites nao comunicados previamente.</p>
+
+    <div class="annotated-image">
+      <img src="criar-musica/criar-audio.png" alt="Enviar Audio">
+      <div class="marker high" style="top: 11%; left: 88%;">1</div>
+      <div class="highlight-box high" style="top: 9%; left: 20%; width: 60%; height: 4%;"></div>
+      <div class="marker high" style="top: 85%; left: 88%;">2</div>
+      <div class="highlight-box high" style="top: 83%; left: 20%; width: 60%; height: 4%;"></div>
+      <div class="marker positive" style="top: 58%; left: 15%;">+</div>
+      <div class="marker positive" style="top: 68%; left: 15%;">+</div>
+    </div>
+
+    <ul class="findings-list">
+      <li class="finding">
+        <div class="finding-number high">1</div>
+        <div class="finding-content">
+          <strong>Limite "ate 1 minuto" em texto pequeno — nao informado no hub</strong>
+          Usuario pode ter preparado audio de 3 min. Descoberta tardia gera frustracao e abandono.
+        </div>
+      </li>
+      <li class="finding">
+        <div class="finding-number high">2</div>
+        <div class="finding-content">
+          <strong>Aviso "maximo 1 minuto" repetido no final — chega tarde</strong>
+          Funciona como validacao, mas o dano (expectativa quebrada) ja foi feito.
+        </div>
+      </li>
+    </ul>
+    <div class="callout positive">
+      <strong>Melhor formulario do fluxo:</strong> Apenas 3 campos, proposta "preservando sua voz original" forte e diferenciada, placeholder de instrumentos com linguagem natural excelente, unico com asterisco de obrigatoriedade, CTA "Processar Audio" reflete acao real.
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 4. ACHADOS TRANSVERSAIS -->
+<!-- ================================================================ -->
+<div class="section" id="transversais">
+  <p class="section-label">Parte 4</p>
+  <h2 class="section-title">Achados Transversais</h2>
+  <p class="section-subtitle">Problemas que permeiam toda a experiencia e nao pertencem a uma tela especifica.</p>
+
+  <!-- NUMEROS -->
+  <h3 style="font-size: 17px; margin: 24px 0 12px;">Numeros Inconsistentes entre Paginas</h3>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Metrica</th>
+        <th>LP</th>
+        <th>Signup</th>
+        <th>Hub Criacao</th>
+        <th>Calculadora</th>
+        <th>Realidade (~)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Artistas</td>
+        <td>432.360</td>
+        <td>432.690+</td>
+        <td class="bad">412.360</td>
+        <td>N/A</td>
+        <td class="bad">~2.000</td>
+      </tr>
+      <tr>
+        <td>Musicas</td>
+        <td>3.550.1XX</td>
+        <td>3.556.710</td>
+        <td>3.556.740+</td>
+        <td>3.550.440+</td>
+        <td class="bad">~14.000</td>
+      </tr>
+      <tr>
+        <td>Ganho prometido</td>
+        <td>N/A</td>
+        <td class="bad">R$ 50k/ano</td>
+        <td class="bad">R$ 5k/mes (=60k/ano)</td>
+        <td>R$ 2.050/mes</td>
+        <td class="bad">?</td>
+      </tr>
+      <tr>
+        <td>Royalties totais</td>
+        <td>N/A</td>
+        <td>N/A</td>
+        <td>R$ 60MM</td>
+        <td>R$ 16+(?)</td>
+        <td class="bad">?</td>
+      </tr>
+      <tr>
+        <td>"Vagas restantes"</td>
+        <td>22</td>
+        <td class="bad">17</td>
+        <td>N/A</td>
+        <td>"Limitadas"</td>
+        <td class="bad">Ilimitadas</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="callout danger">
+    <strong>Contradicao matematica:</strong> R$ 60MM de royalties / 412.000 artistas = R$ 145 por artista total. Nao R$ 5.000/mes. Os numeros de social proof se contradizem mutuamente.
+  </div>
+
+  <!-- CESSAO DE DIREITOS -->
+  <h3 style="font-size: 17px; margin: 32px 0 12px;">Cessao de Direitos Autorais — A Omissao Central</h3>
+  <p style="font-size: 14px; margin-bottom: 12px;">
+    O core do modelo de negocio (cessao de IP para securitizacao pela Hurst Capital) e completamente invisivel em toda a experiencia pre-cadastro e quase invisivel no cadastro. O fluxo real:
+  </p>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>O que o usuario entende</th>
+        <th>O que realmente acontece</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>"Criar musica gratis"</td><td class="bad">Musica e de titularidade 100% MuvFlow</td></tr>
+      <tr><td>"Ganhar com minhas musicas"</td><td class="bad">Recebe royalties, mas nao e dono</td></tr>
+      <tr><td>"100% Gratis"</td><td class="bad">Gratis porque a cessao de direitos e o pagamento</td></tr>
+      <tr><td>"Aceito os Termos" (checkbox)</td><td class="bad">Aceita cessao de IP + arbitragem obrigatoria + isencao de garantias</td></tr>
+    </tbody>
+  </table>
+
+  <!-- LABELS EM INGLES -->
+  <h3 style="font-size: 17px; margin: 32px 0 12px;">16+ Labels em Ingles — API Suno Exposta</h3>
+
+  <table class="data-table">
+    <thead>
+      <tr><th>Atual (ingles)</th><th>Traducao sugerida</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Weirdness</td><td class="good">Nivel de Experimentacao</td></tr>
+      <tr><td>Style Influence</td><td class="good">Fidelidade ao Estilo</td></tr>
+      <tr><td>Exclude Styles</td><td class="good">Excluir Estilos</td></tr>
+      <tr><td>Vocal Gender: Male / Female</td><td class="good">Voz: Masculina / Feminina / Mista</td></tr>
+      <tr><td>Instrumental Only</td><td class="good">Apenas Instrumental</td></tr>
+      <tr><td>AI Model</td><td class="good">Modelo de IA</td></tr>
+      <tr><td>Studio quality, realistic vocals</td><td class="good">Qualidade de estudio, voz realista</td></tr>
+      <tr><td>Smart prompts, up to 8 min</td><td class="good">Prompts inteligentes, ate 8 min</td></tr>
+      <tr><td>Improved vocals, up to 4 min</td><td class="good">Vocais aprimorados, ate 4 min</td></tr>
+      <tr><td>Better song structure, up to 4 min</td><td class="good">Melhor estrutura, ate 4 min</td></tr>
+      <tr><td>Richer sound, up to 8 min</td><td class="good">Som mais rico, ate 8 min</td></tr>
+      <tr><td>NEW (badge)</td><td class="good">NOVO</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size: 13px; color: #666; margin-top: 8px;">
+    <strong>Causa provavel:</strong> Termos da API Suno AI expostos sem camada de traducao. Quick win: 1-2 horas de dev.
+  </p>
+
+  <!-- REDUNDANCIA DOS FORMULARIOS -->
+  <h3 style="font-size: 17px; margin: 32px 0 12px;">Redundancia dos Formularios de Criacao</h3>
+
+  <div class="comparison-grid">
+    <div class="comparison-card problem">
+      <div class="card-header">Atual: 4 opcoes no hub</div>
+      <div class="card-body">
+        <ul>
+          <li>Do Zero</li>
+          <li>Musica de Referencia (= Do Zero + 1 campo)</li>
+          <li>Banda de Referencia (= Do Zero + 1 campo)</li>
+          <li>Enviar Audio (unico diferente)</li>
+        </ul>
+        <p style="margin-top: 8px; color: #991b1b;">3 opcoes quase identicas = paralisia de decisao</p>
+      </div>
+    </div>
+    <div class="comparison-card solution">
+      <div class="card-header">Proposto: 2 opcoes claras</div>
+      <div class="card-body">
+        <ul>
+          <li><strong>Criar com IA</strong> (formulario unico + campo de referencia opcional)</li>
+          <li><strong>Enviar seu Audio</strong> (formulario atual preservado)</li>
+        </ul>
+        <p style="margin-top: 8px; color: #166534;">Decisao instantanea, sem perda de funcionalidade</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================================================================ -->
+<!-- 5. RECOMENDACOES -->
+<!-- ================================================================ -->
+<div class="section" id="recomendacoes">
+  <p class="section-label">Parte 5</p>
+  <h2 class="section-title">Recomendacoes Priorizadas</h2>
+  <p class="section-subtitle">Consolidadas e sem duplicatas. Cada recomendacao aparece uma vez.</p>
+
+  <div class="rec-group">
+    <h4>Quick Wins (baixo esforco, alto impacto)</h4>
+
+    <div class="rec-item">
+      <span class="rec-badge quick">5 min</span>
+      <div>Trocar CTA de "Criar Minha Primeira Musica" para <strong>"Criar Minha Conta Gratis"</strong></div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">15 min</span>
+      <div><strong>Remover todos os banners de escassez artificial</strong> ("22 vagas", "17 restantes", "Vagas Limitadas") de todas as paginas</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">15 min</span>
+      <div><strong>Remover precos riscados falsos</strong> ("GRATIS <s>R$49,90</s>") dos cards de criacao</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">30 min</span>
+      <div><strong>Adicionar "Criar Musica" ao top nav</strong> como CTA primario visivel em todas as paginas</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">30 min</span>
+      <div><strong>Adicionar resumo sobre cessao de direitos</strong> antes do checkbox: "Ao criar musicas, voce concede titularidade ao MuvFlow"</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">30 min</span>
+      <div><strong>Adicionar limites do "Enviar Audio"</strong> (1 min, 10MB) no card do hub de criacao</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">1-2h</span>
+      <div><strong>Traduzir todos os 16+ labels em ingles</strong> para portugues (Weirdness → Experimentacao, etc.)</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">1-2h</span>
+      <div><strong>Unificar todos os numeros</strong> via API unica lendo dados reais do banco</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">1-2h</span>
+      <div><strong>Marcar campos obrigatorios/opcionais</strong> em todos os formularios de criacao</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge quick">1-2h</span>
+      <div><strong>Adicionar tooltips nas opcoes avancadas</strong> com explicacao em portugues de cada controle</div>
+    </div>
+  </div>
+
+  <div class="rec-group">
+    <h4>Melhorias Estruturais (esforco medio)</h4>
+
+    <div class="rec-item">
+      <span class="rec-badge structural">3-5 dias</span>
+      <div><strong>Unificar 3 formularios de criacao em 1</strong> com campo de referencia opcional. Hub passa de 4 para 2 opcoes claras</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">3-5 dias</span>
+      <div><strong>Unificar navegacao</strong> — top nav e sidebar com mesmos itens: Logo | Criar Musica | Explorar | Calculadora | Indique e Ganhe | Entrar</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Rebalancear messaging da LP</strong> — 50% criacao/arte, 30% monetizacao, 20% comunidade. Incluir copy sobre expressao, nao so dinheiro</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Adicionar player de preview</strong> na LP, Explorar e Criadores Recentes. Trechos de 30s sem cadastro</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Reestruturar Calculadora</strong> — disclaimer ANTES dos sliders, cenario conservador ao lado do otimista, mediana real de ganhos</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Substituir social proof inflado</strong> por cases reais com link para Spotify, depoimentos em video, screenshots de dashboards</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Criar resumo visual dos Termos</strong> — 1 pagina com 5-7 pontos-chave, incluindo cessao de direitos. Checkbox separado para IP</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge structural">1 sem</span>
+      <div><strong>Criar secao "Quem Somos"</strong> — transparencia sobre Muv Capital, Hurst Capital, modelo de negocio real</div>
+    </div>
+  </div>
+
+  <div class="rec-group">
+    <h4>Redesigns Recomendados (esforco alto)</h4>
+
+    <div class="rec-item">
+      <span class="rec-badge redesign">2-3 sem</span>
+      <div><strong>Redesign da pagina Explorar</strong> — cards com capas, player inline, filtros por genero/mood, curadoria editorial, modo grid</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge redesign">2-3 sem</span>
+      <div><strong>Redesign do signup</strong> com abordagem "menos e mais" — headline + 3 beneficios + formulario + 1 testimonial real. Remover urgencia e excesso</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge redesign">2-3 sem</span>
+      <div><strong>Fluxo wizard de criacao em 3 passos</strong> — (1) estilo + descricao, (2) letra, (3) ajustes finais. Mesmos campos, carga percebida 3x menor</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge redesign">2-3 sem</span>
+      <div><strong>Separar landing page do hub de criacao</strong> — LP converte visitantes em usuarios; hub converte usuarios em criadores. Misturar dilui ambos</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge redesign">3-4 sem</span>
+      <div><strong>Narrativa de transparencia sobre modelo de negocio</strong> — "MuvFlow e gratis porque monetizamos as musicas juntos. Voce recebe royalties, nos cuidamos da distribuicao." Transforma fraqueza em proposta de valor</div>
+    </div>
+    <div class="rec-item">
+      <span class="rec-badge redesign">3-4 sem</span>
+      <div><strong>Dashboard publico de metricas reais</strong> — numeros de artistas, musicas, royalties pagos, atualizados automaticamente. Substitui numeros inflados por transparencia</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<footer>
+  Relatorio UX completo — MuvFlow | Produzido em 30/03/2026<br>
+  13 telas analisadas | 7 dark patterns catalogados | 26 recomendacoes priorizadas<br>
+  Baseado em Jobs-to-be-Done, Principios de Cialdini, Fogg Behavior Model, Hick's Law e taxonomia de Dark Patterns
+</footer>
+
+</body>
+</html>
